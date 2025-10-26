@@ -7,7 +7,7 @@ designed to understand the full process of ray tracing without relying on DXR or
 
 ---
 
-## 🧱 Build Instructions
+## Build Instructions
 
 ### 1. Clone the repository
 ```bash
@@ -31,20 +31,20 @@ cmake --build .
 ### 4. Run the executable
 ```bash
 cd ../out
-./main
+main
 ```
 
 ---
 
-## ⚙️ Requirements
-- C++17 or later  
+## Requirements
+- C++ 
 - OpenGL 4.5 or higher  
-- CMake 3.10+  
-- GPU with 4GB+ VRAM (recommended)
+- CMake  
+- MINGW
 
 ---
 
-## 🧩 Features
+## Features
 - Custom BVH construction and texture packing  
 - Real-time ray tracing pipeline on GPU  
 - Single-sample rendering with spatial & temporal denoising  
