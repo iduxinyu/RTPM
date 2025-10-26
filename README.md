@@ -31,7 +31,7 @@ cmake --build .
 ### 4. Run the executable
 ```bash
 cd ../out
-main
+./main
 ```
 
 ---
