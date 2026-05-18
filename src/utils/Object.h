@@ -11,6 +11,24 @@
 
 enum Axis{xAxis=0,yAxis=1,zAxis=2};
 enum MATERIAL{DIFFUSE=0,SPECULAR=1,REFRACT=2};
+enum LightType{LIGHT_POINT=0, LIGHT_SPOT = 1, LIGHT_DIRECTIONAL = 2, LIGHT_RECT = 3 };
+
+struct BVHNode
+{
+    int glassIndex;
+    glm::vec3 min;
+    glm::vec3 max;
+
+    BVHNode* left;
+    BVHNode* right;
+
+
+};
+
+class BVH
+{
+
+};
 
 class Quad{
 
@@ -220,13 +238,56 @@ public:
     glm::vec3 dir;
     glm::vec3 color;
     float intensity;
+    LightType type;
+    glm::vec4 spotPro;
+    glm::vec4 rectPro;
 
-    Light(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float intensity)
+    Light(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float intensity, LightType type=LIGHT_POINT, float cosAngleSpot=0.0, glm::vec3 rectTangent=glm::vec3(0.0) )
     {
         this->color=color;
         this->pos=pos;
         this->dir=dir;
         this->intensity=intensity;
+        this->type=type;
+        this->spotPro.x=cosAngleSpot;
+        this->rectPro=glm::vec4(rectTangent,0.0);
         
     }
+};
+
+struct alignas(16) RayDensityParams
+{
+    glm::ivec2 CoarseDim;        // 8
+    float MinPhotonPixelSize;    // 4
+    float VarianceGain;          // 4
+
+    float SmoothWeight;          // 4
+    int   MaxTaskPerPixel;       // 4
+    float UpdateSpeed;           // 4
+};
+static_assert(sizeof(RayDensityParams) % 16 == 0);
+
+struct LightInfo
+{
+    glm::vec4 position;   // 16B
+    glm::vec4 direction;  // 16B
+    glm::vec4 color;      // 16B
+    glm::vec4 spotPro;    // 16B
+    glm::vec4 rectPro;    // 16B
+};
+
+struct Photon
+{
+    glm::vec4 posW;
+    glm::vec4 color;
+    glm::vec4 dPdx;
+    glm::vec4 dPdy;
+    glm::vec4 dir;
+};
+
+struct PixelInfo
+{
+    int count;
+    int screenArea;
+    int screenAreaSq;
 };

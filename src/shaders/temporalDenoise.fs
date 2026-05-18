@@ -15,6 +15,7 @@ uniform sampler2D gTrColor;
 uniform sampler2D lastTrColor;
 uniform sampler2D lastIDMap;
 uniform sampler2D currIDMap;
+uniform sampler2D causticsMap;
 
 const int kernelRadius=3;
 
@@ -34,8 +35,8 @@ vec2 reprojection()
     lastFramePos.xy=lastFramePos.xy*0.5+0.5;
 
     //check id
-    float lastId=texture(lastIDMap,lastFramePos.xy).y;
-    float currentId=texture(currIDMap, TexCoords).y;
+    float lastId=texture(lastIDMap,lastFramePos.xy).x;
+    float currentId=texture(currIDMap, TexCoords).x;
     if(lastId!=currentId)
         return vec2(-1.0);
 
@@ -93,7 +94,11 @@ void main()
     else
     {
         vec2 lastTexCoord=reprojection();
-        FragColor = vec4(TemporalAccumulation(color.xyz,lastTexCoord),1.0);
+
+        //sample caustics
+        vec4 caustics=texture(causticsMap,TexCoords);
+
+        FragColor = vec4(TemporalAccumulation(color.xyz,lastTexCoord)+caustics.xyz*caustics.w,1.0);
 
     }
     //FragColor=color;

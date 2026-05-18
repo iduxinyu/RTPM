@@ -2,7 +2,7 @@
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow* window, View* view, float deltaTime);
 
 int fbw=SCR_WIDTH;
 int fbh=SCR_HEIGHT;
@@ -68,23 +68,48 @@ int View::initWindow()
 void View::initSetting()
 {
     scene=new Scene();
-
+    std::cout<<"Compile Ray Trace Shader"<<std::endl;
     rayTraceShader=new Shader("../src/shaders/vScreen.vs", "../src/shaders/rayTracing.fs");
+    std::cout<<"Compile gbuffer Shader"<<std::endl;
     gBufferShader=new Shader("../src/shaders/gBuffer.vs", "../src/shaders/gBuffer.fs");
+    std::cout<<"Compile shadow Map Shader"<<std::endl;
     shadowMapShader=new Shader("../src/shaders/gBuffer.vs", "../src/shaders/shadowMap.fs");
+    std::cout<<"Compile filter Shader"<<std::endl;
     filterShader=new Shader("../src/shaders/vScreen.vs", "../src/shaders/denoise.fs");
+    std::cout<<"Compile temporal Shader"<<std::endl;
     temporalShader=new Shader("../src/shaders/vScreen.vs", "../src/shaders/temporalDenoise.fs");
+    
 
-    mainCamera=new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    //Photon Shader
+    std::cout<<"Compile updateRayDensity Shader"<<std::endl;
+    updateRayDensityShader=new Shader("../src/shaders/updateRayDensity.cs");
+    std::cout<<"Compile mipmap0 Shader"<<std::endl;
+    mipMap0Shader=new Shader("../src/shaders/rayCountMipMap0.cs");
+    std::cout<<"Compile mipmap Shader"<<std::endl;
+    mipMapShader=new Shader("../src/shaders/rayCountMipMap.cs");
+    std::cout<<"Compile emit photon Shader"<<std::endl;
+    emitPhotonShader=new Shader("../src/shaders/emitPhotons.cs");
+    std::cout<<"Compile scatter Shader"<<std::endl;
+    scatterPhotonShader=new Shader("../src/shaders/photonScatter.vs", "../src/shaders/photonScatter.fs");
+    std::cout<<"Compile caustics blended result Shader"<<std::endl;
+    blendCausticsShader=new Shader("../src/shaders/photonFilter.cs");
+
+    mainCamera=new Camera(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -35.0f);
+
     lightCamera=new Camera(scene->mainLight->pos, glm::vec3(0.0f, 0.0f, -1.0f), 0.0f, -90.0f,90.0f);
 
     screen=new Quad();
+
+    photonMap=new PhotonMap();
 
     initGBuffer();
     initShadowBuffer();
     initRayTraceBuffer(gRayTr_fbo, gTrColor);
     initRayTraceBuffer(gFilter_fbo, gFilterColor);
     initFilterMap();
+
+    initRayTraceBuffer(gCaustic_fbo, gCaustics); //for photon Map;
+    
 
 }
 
@@ -162,6 +187,8 @@ void View::initGBuffer()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+
+
 void View::bindingRayTraceShader()
 {
     rayTraceShader->use();
@@ -181,6 +208,7 @@ void View::bindingRayTraceShader()
     rayTraceShader->setInt("gDepth",3);
     rayTraceShader->setInt("gColor",4);
     rayTraceShader->setInt("shadowMap",5);
+    rayTraceShader->setInt("causticsMap",6);
    
 
     rayTraceShader->setVec3("mainCamera.position", mainCamera->Position);
@@ -210,6 +238,8 @@ void View::bindingRayTraceShader()
     glBindTexture(GL_TEXTURE_2D, gColor);
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, gShadow);
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, photonMap->blendedResult);
 
 
 }
@@ -333,6 +363,32 @@ void View::initRayTraceBuffer(GLuint &fbo, GLuint &tex)
 
 }
 
+void View::rayTracing(Quad *screen)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER,gRayTr_fbo);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glClearColor(0.5f, 0.4f, 0.6f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    //draw scene
+        
+    //binding info to rayTraceShader
+    std::cout<<"begin bind ray trace shader"<<std::endl;
+    bindingRayTraceShader();
+	rayTraceShader->use();    
+	glBindVertexArray(screen->VAO);
+    std::cout<<"begin ray trace"<<std::endl;
+	glDrawArrays(GL_TRIANGLES,0,6);
+    glFinish();
+    std::cout<<"end ray trace"<<std::endl;
+
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+
+}
+
 void View::initFilterMap()
 {   
     //For color
@@ -353,6 +409,62 @@ void View::initFilterMap()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+   
+
+    // last normal buffer
+    glGenTextures(1, &lastNormal);
+    glBindTexture(GL_TEXTURE_2D, lastNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+             
+    //last Depth buffer
+    glGenTextures(1,&lastDepth);
+    glBindTexture(GL_TEXTURE_2D, lastDepth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RG, GL_FLOAT, nullptr);
+        
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    //last caustics
+    glGenTextures(1, &lastCaustics);
+    glBindTexture(GL_TEXTURE_2D, lastCaustics);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    //clear to zero
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lastTrColor, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, lastNormal, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, lastDepth, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, lastCaustics, 0);
+
+    
+    GLenum bufs[] = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2,
+        GL_COLOR_ATTACHMENT3
+    };
+    glDrawBuffers(4, bufs);
+
+    // 清 float / UNORM 纹理
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+ 
 
 
 }
@@ -412,6 +524,7 @@ void View::temporalFilter(Quad *screen, int frameID)
     temporalShader->setInt("lastTrColor",2);
     temporalShader->setInt("currIDMap",3);
     temporalShader->setInt("lastIDMap",4);
+    temporalShader->setInt("causticsMap",5);
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -423,6 +536,8 @@ void View::temporalFilter(Quad *screen, int frameID)
     glBindTexture(GL_TEXTURE_2D, gID);
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, lastID);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, photonMap->blendedResult);
 
     glBindVertexArray(screen->VAO);
 	glDrawArrays(GL_TRIANGLES,0,6);
@@ -430,6 +545,17 @@ void View::temporalFilter(Quad *screen, int frameID)
 
     glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
+}
+void View::initRayDensity()
+{
+    //init ray 
+
+}
+
+void View::updateRayDensity()
+{
+    //
+
 }
 
 int View::display()
@@ -442,49 +568,77 @@ int View::display()
 
     frameID=0;
 
+    float lastFrame = 0.0f;
+
 
     while(!glfwWindowShouldClose(window))
     {
         frameID++;
-         //input
-        processInput(window);
 
-        //pass 1: G-Buffer
+        float currentFrame = (float)glfwGetTime();
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+         //input
+        processInput(window, this, deltaTime);
+
+        //update lights array
+        scene->lights[0] = *scene->mainLight;
+
+        //update light camera 
+
+        //[photon mapping] pass 0: update light ID
+
+        //[Todo] add lights
+        //[Current] only one light needs PM
+
+         //pass 1: G-Buffer
         renderGBuffer();
 
+        
+
+        //[photon mapping] pass 1: create mipmap task id for rays
+        photonMap->generateMipMap0(*mipMap0Shader, photonMap->gRayDensityTexA);
+        photonMap->generateMipMap(*mipMapShader, photonMap->gRayDensityTexA);
+
+        //[photon mapping] pass 2: emit photons
+        photonMap->updateLightInfoSSBO(scene->lights, scene->lights.size());
+        photonMap->resetPixelInfoSSBO();
+        photonMap->resetPhotonCounter();
+        photonMap->emitPhotons(*emitPhotonShader, photonMap->gRayDensityTexA, scene->verticesTex, glm::vec2((float)scene->verticesTex_width), gDepth, *mainCamera, scene->glasses.size());
+
+        //[photon mapping] pass 3: update ray density
+        photonMap->updateRayDensity(*updateRayDensityShader, photonMap->gRayDensityTexA, photonMap->gRayDensityTexB);
+
+         GLuint tempRayDensity;
+         tempRayDensity=photonMap->gRayDensityTexA;
+         photonMap->gRayDensityTexA=photonMap->gRayDensityTexB;
+         photonMap->gRayDensityTexB=tempRayDensity;
+
+
+        //[photon mapping] pass 4: scattering photons
+        photonMap->getPhotonCount();
+        photonMap->scatterPhotons(gCaustic_fbo, *scatterPhotonShader, *mainCamera, gDepth, gNormal, gColor);
+
+        //[photon mapping] pass 5: filter
+        photonMap->filter(*blendCausticsShader, gDepth, lastDepth, gNormal, lastNormal, gCaustics, lastCaustics, *mainCamera, lastViewProj, lastProj);
+
         //pass 2: Shadow Map
-        renderShadowMap();
+        // renderShadowMap();
+
+
         //pass 3: Ray Tracing
-
-        
-        // render command
-        glBindFramebuffer(GL_FRAMEBUFFER,gRayTr_fbo);
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-        glClearColor(0.5f, 0.4f, 0.6f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        
-   
-       
-        //draw scene
-        
-        //绑定信息到rayTraceShader
-        bindingRayTraceShader();
-		rayTraceShader->use();    
-		glBindVertexArray(screen->VAO);
-		glDrawArrays(GL_TRIANGLES,0,6);
-
-        glBindVertexArray(0);
-        glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
-	
+        rayTracing(screen);
 
         //pass 4: Filtering
         filter(screen);
 
         //pass 5: Temporal filtering
         temporalFilter(screen, frameID);
+
+
+        //update tex
+       glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT);
 
         glBindTexture(GL_TEXTURE_2D, lastTrColor);
         glCopyTexSubImage2D(
@@ -498,9 +652,31 @@ int View::display()
         glCopyImageSubData(
             gID, GL_TEXTURE_2D, 0, 0, 0, 0,  
             lastID, GL_TEXTURE_2D, 0, 0, 0, 0,  
-            SCR_WIDTH, SCR_WIDTH, 1                   
+            SCR_WIDTH, SCR_HEIGHT, 1                   
         );
-        
+
+        glCopyImageSubData(
+            gNormal, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            lastNormal, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            SCR_WIDTH, SCR_HEIGHT, 1                   
+        );
+
+        glCopyImageSubData(
+            gDepth, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            lastDepth, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            SCR_WIDTH, SCR_HEIGHT, 1                   
+        );
+
+        glCopyImageSubData(
+            gCaustics, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            lastCaustics, GL_TEXTURE_2D, 0, 0, 0, 0,  
+            SCR_WIDTH, SCR_HEIGHT, 1                   
+        );
+        glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+
+        //output to picture
+        // std::string filename = "videoImages/" + std::to_string(frameID) + ".png";
+        // Output::SaveDefaultFBOToImage(filename.c_str(), SCR_WIDTH, SCR_HEIGHT);
                
 
         // 
@@ -508,7 +684,8 @@ int View::display()
         glfwSwapBuffers(window);
 
         //更新last
-        lastViewProj= mainCamera->GetProjMatrix(SCR_WIDTH,SCR_HEIGHT,false)*mainCamera->GetViewMatrix();
+        lastProj = mainCamera->GetProjMatrix(SCR_WIDTH,SCR_HEIGHT,false);
+        lastViewProj= lastProj*mainCamera->GetViewMatrix();
         //update scene and camera
         scene->updateScene();
     }
@@ -534,9 +711,31 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-//用于按键输入
-void processInput(GLFWwindow *window)
+//for keyboard
+void processInput(GLFWwindow* window, View* view, float deltaTime)
 {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    float speed = 0.1f * deltaTime;
+
+    glm::vec3& lightPos = view->scene->mainLight->pos;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        lightPos.y += speed;
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        lightPos.y -= speed;
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        lightPos.x -= speed;
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        lightPos.x += speed;
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        lightPos.z -= speed;
+
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        lightPos.z += speed;
 }

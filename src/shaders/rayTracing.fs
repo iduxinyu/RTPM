@@ -81,8 +81,12 @@ uniform Light light;
 
 
 //const parameter
-const int rayTraceDep=10;
+const int rayTraceDep=6;
 const float ior_glass=1.5;
+
+const float offset=1e-5;
+
+const float RR = 0.8;
 
 //varible parameter
 uint m_u = uint(521288629);
@@ -159,11 +163,11 @@ Plane planeConstruct(int axis, float dis, vec3 color)
 
 void initWall()
 {
-    planes[0]=planeConstruct(AXIS_X, 1.5, vec3(0.8,0.3,0.3));
-    planes[1]=planeConstruct(AXIS_X, -1.5, vec3(0.3,0.8,0.3));
+    planes[0]=planeConstruct(AXIS_X, 1.5, vec3(0.63, 0.065, 0.05));
+    planes[1]=planeConstruct(AXIS_X, -1.5, vec3(0.14, 0.45, 0.091));
     planes[2]=planeConstruct(AXIS_Y, 1.5, vec3(0.3,0.3,0.8));
-    planes[3]=planeConstruct(AXIS_Y, -1.5, vec3(0.75));
-    planes[4]=planeConstruct(AXIS_Z, -5, vec3(0.75));
+    planes[3]=planeConstruct(AXIS_Y, -1.5, vec3(0.725, 0.71, 0.68));
+    planes[4]=planeConstruct(AXIS_Z, -5, vec3(0.725, 0.71, 0.68));
 }
 
 void initRay(out Ray r)
@@ -194,6 +198,39 @@ Ray world2Local(Ray r, mat4 model)
     localR.d=normalize(localE.xyz-localO.xyz);
 
     return localR;
+}
+
+vec3 sampleCosineHemisphere(vec2 xi)
+{
+    float r = sqrt(xi.x);
+    float theta = 2.0 * PI * xi.y;
+
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+    float z = sqrt(1.0 - xi.x);
+
+    return vec3(x,y,z);
+}
+
+vec3 tangentToWorld(vec3 localDir, vec3 normal)
+{
+    // Build tangent basis
+    vec3 up =
+        abs(normal.z) < 0.999
+        ? vec3(0.0, 0.0, 1.0)
+        : vec3(1.0, 0.0, 0.0);
+
+    vec3 tangent =
+        normalize(cross(up, normal));
+
+    vec3 bitangent =
+        cross(normal, tangent);
+
+    // Transform from tangent(local) space to world space
+    return
+        localDir.x * tangent +
+        localDir.y * bitangent +
+        localDir.z * normal;
 }
 
 ////////////////////////////collision detection/////////////////////////
@@ -250,7 +287,7 @@ bool hitPlane(Ray r, inout HitRecord rec)
        
         rec.position = r.o + r.d * rec.t;
         // 法线总与入射相反
-        if (dot(rec.normal, r.d) > 0.0) rec.normal = -rec.normal;
+        //if (dot(rec.normal, r.d) > 0.0) rec.normal = -rec.normal;
         // 交点偏移，避免自相交
         rec.position += rec.normal * 1e-3;
         return true;
@@ -412,6 +449,37 @@ bool ifInShadow(vec3 position)
     }
         
 }
+
+bool ifInShadowRayTrace(vec3 position, vec3 lightPos, out float shadowScale)
+{
+    //get 
+    vec3 shadowRayDir=normalize(lightPos-position);
+
+    Ray shadowRay;
+    shadowRay.d=normalize(lightPos-position);
+    shadowRay.o=position+shadowRay.d*1e-6;
+
+    //trace
+    HitRecord shadowRec;
+    shadowRec.t=-1.0;
+    if(ifHit(shadowRay, shadowRec) && shadowRec.t < length(lightPos-position))
+    {
+        if(shadowRec.matType== MAT_DIFFUSE || shadowRec.matType== MAT_SPECULAR)
+            shadowScale = 0.001;
+        else if(shadowRec.matType== MAT_REFRACT)
+            shadowScale = 0.2;
+        
+        return true;
+
+    }
+
+    shadowScale = 1.0;
+
+    return false;
+
+    
+        
+}
 /////////////////////////////////////////////////////////////////
 
 /////////////////////////Filter//////////////////////////////////
@@ -463,10 +531,10 @@ vec3 BRDF_CookTorrance(vec3 N, vec3 V, vec3 L, vec3 albedo, float metallic, floa
 {
     vec3 H = normalize(V + L);
 
-    // 基础反射率
+    
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
-    // 各个项
+   
     float NDF = DistributionGGX(N, H, roughness);
     float G   = GeometrySmith(N, V, L, roughness);
     vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
@@ -507,81 +575,137 @@ vec3 compute_direct_light(vec3 lightIntensity, vec3 n, vec3 v, vec3 l, vec3 kd, 
 bool LambertianScatter(vec3 throughput, HitRecord rec, Ray r, out Ray nextR, out vec3 atten, inout vec3 directLight)
 {
     vec3 position=r.o+r.d*rec.t;
-    vec3 l=normalize(light.position-position);
+    //vec3 l=normalize(light.position-position);
 
-	nextR.o = position+rec.normal*0.5;
-    vec3 d = normalize(rec.normal + random_in_unit_sphere());
-    nextR.d = d;
+    // =========================================
+    // cosine hemisphere sampling
+    // =========================================
+
+
+	vec2 xi = vec2(rand(), rand());
+
+    vec3 localDir = sampleCosineHemisphere(xi);
+
+    vec3 d = tangentToWorld(localDir, rec.normal);
+
+    nextR.o = position + rec.normal * offset;
+
+    nextR.d = normalize(d);
+
+    // =========================================
+    // Monte Carlo estimator
+    // =========================================
+
+    float NdotL = max(dot(rec.normal, nextR.d), 0.0);
+
+    float pdf = NdotL / PI;
+
+    vec3 brdf = BRDF_CookTorrance( rec.normal, -r.d, nextR.d, rec.color, 0.0,   1.0);  
+
+    atten = brdf * NdotL / max(pdf, 0.0001);
+
    
+    // =========================================
+    // direct lighting
+    // =========================================
 
-    //atten = BRDF_BlinnPhong(rec.normal, -r.d, l, rec.color, vec3(0.05),4.0)*clamp(dot(rec.normal,nextR.d), 0.0, 1.0);
-    atten = BRDF_CookTorrance(rec.normal, -r.d, l, rec.color, 0.0, 1.0);
-    //If not in shadow, update direct Light
-    if(!ifInShadow(position))
-        //directLight+=throughput*compute_direct_light(light.color*light.intensity, rec.normal, -r.d, l, rec.color, vec3(0.05),4.0);
-        directLight+=throughput*compute_direct_light_PBR(light.color*light.intensity, rec.normal, -r.d, l, rec.color, 0.0, 1.0);
-    FragColor=vec4(rec.normal,1.0);
+    vec3 l = normalize(light.position-position);
+
+    float dist2 =
+        dot(light.position-position,
+            light.position-position);
+
+    vec3 Li =
+        light.color *
+        light.intensity /
+        dist2;
+
+    float shadowScale = 1.0;
+
+    ifInShadowRayTrace(
+        position,
+        light.position,
+        shadowScale);
+
+    directLight = Li * BRDF_CookTorrance(rec.normal, -r.d, l, rec.color, 0.0, 1.0) * max(dot(rec.normal,l),0.0) * shadowScale;
+    
+  
     return true;
 
 	
 }
 
-bool DielectricScatter(in Ray r, in HitRecord rec, out Ray nextR, out vec3 atten)
+bool DielectricScatter(
+    in Ray r,
+    in HitRecord rec,
+    out Ray nextR,
+    out vec3 atten)
 {
-    vec3 outward_normal;
-    float ni_over_nt;
-    //判断从内往外，还是从外往内射
-    float cosine=dot(r.d,rec.normal);
-    if(cosine>0.0) //从内朝外
-    {
-        outward_normal=-rec.normal;
-        ni_over_nt=ior_glass;
-    }
-    else //从外向内
-    {
-        outward_normal=rec.normal;
-        ni_over_nt=1.0/ior_glass;
-        cosine=-cosine;
-    }
+    vec3 N;
+    float eta;
 
-    vec3 refractRay=refract(r.d,outward_normal,ni_over_nt);
-    float reflect_prob;
+    float cosTheta = dot(r.d, rec.normal);
 
-     if(length(refractRay)<1e-6)
+    if(cosTheta > 0.0)
     {
-        reflect_prob=1.0;
+        N = -rec.normal;
+        eta = ior_glass;
     }
     else
     {
-        float f0=(1.0-ior_glass)/(1.0+ior_glass);
-        f0=f0*f0;
-        reflect_prob = fresnelSchlick(cosine, vec3(f0)).x;
-           
+        N = rec.normal;
+        eta = 1.0 / ior_glass;
+        cosTheta = -cosTheta;
     }
 
-    vec3 position=r.o+r.d*rec.t;
-    
-    if(rand() < reflect_prob){ //反射
-      
-        nextR.d = normalize(reflect(r.d,outward_normal));
-        nextR.o = position+nextR.d*1e-3;
-        atten = vec3(reflect_prob); 
-         
-	}
-	else{   //折射
-        
-        nextR.d = normalize(refractRay);
-        nextR.o = position+nextR.d*1e-3;
-        atten = vec3((1.0 - reflect_prob) / (ni_over_nt * ni_over_nt));
-      
-	}
-    
-    atten*=rec.color;
-     //atten=vec3(1.0);
-    FragColor=vec4(rec.normal,1.0);
-	return true;
-}
+    vec3 refractDir =
+        refract(r.d, N, eta);
 
+    float F;
+
+    if(length(refractDir) < 1e-6)
+    {
+        F = 1.0;
+    }
+    else
+    {
+        float f0 =
+            (1.0 - ior_glass)
+            /
+            (1.0 + ior_glass);
+
+        f0 *= f0;
+
+        F =
+            fresnelSchlick(
+                cosTheta,
+                vec3(f0)).x;
+    }
+
+    vec3 position =
+        r.o + r.d * rec.t;
+
+    if(rand() < F)
+    {
+        nextR.d =
+            normalize(reflect(r.d, N));
+
+        nextR.o =
+            position + N * offset;
+    }
+    else
+    {
+        nextR.d =
+            normalize(refractDir);
+
+        nextR.o =
+            position - N * offset;
+    }
+
+    atten = rec.color;
+
+    return true;
+}
 
 bool materialScatter(vec3 throughput, HitRecord rec, Ray r,out Ray nextR, out vec3 atten, inout vec3 directLight)
 {
@@ -606,15 +730,16 @@ bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
 
     vec4 color_mat=texture(gColor,TexCoords);
     color_mat.a=texture(gNormal,TexCoords).a;
-    FragColor=vec4(normal,1.0);
     if(color_mat.a == MAT_DIFFUSE)
     {
         vec3 v=normalize(mainCamera.position-position);
         vec3 l=normalize(light.position-position);
 
-        nextR.o = position+normal*0.5;
+        nextR.o = position+normal*offset;
         vec3 d = normalize(normal + random_in_unit_sphere());
         nextR.d = d;
+        //nextR.d = normalize(reflect(-v,normal));
+
        
         //采样颜色
         //atten=BRDF_BlinnPhong(normal, v, l, color_mat.xyz, vec3(0.05),4.0);
@@ -622,9 +747,9 @@ bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
       
         
         //如果在shadow 中
-        if(!ifInShadow(position))
+        //if(!ifInShadow(position))
             //directLight+=compute_direct_light(light.color*light.intensity, normal, v, l, color_mat.xyz, vec3(0.05),4.0);
-            directLight+=compute_direct_light_PBR(light.color*light.intensity, normal, v, l, color_mat.xyz, 0.0, 1.0);
+            directLight=compute_direct_light_PBR(light.color*light.intensity, normal, v, l, color_mat.xyz, 0.0, 1.0);
         return true;
     }
     else if(color_mat.a == MAT_REFRACT)
@@ -652,14 +777,14 @@ bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
         if(rand() < reflect_prob){ //反射
             
             nextR.d = normalize(reflect(v,normal));
-            nextR.o = position+nextR.d*1e-3;
+            nextR.o = position+normal*offset;
             atten = vec3(reflect_prob); 
             
 	    }
 	    else{   //折射
            
             nextR.d = normalize(refractRay);
-            nextR.o = position+nextR.d*1e-3;
+            nextR.o = position-normal*offset;
             atten = vec3((1.0 - reflect_prob) / (ni_over_nt * ni_over_nt));
           
 
@@ -692,32 +817,47 @@ void main()
 
     HitRecord rec;
     Ray r;
-    vec3 rayTrColor=vec3(0.0f);
+    
+    vec3 Lo=vec3(0.0f);
     vec3 bgColor=vec3(30.0f);
     vec3 throughput=vec3(1.0f);
 
     //init ray dir according to the Texcoords
-    //initRay(r);
+    initRay(r);
     
     //first Jump by gBuffer
-    firstJump(r, throughput, rayTrColor);
-   
+    //firstJump(r, throughput, rayTrColor);
+    FragColor=vec4(r.d,1.0);
     for(int i=0;i<rayTraceDep;i++)
     {
-        rec.t=-1.0f; //清空上一次的反射结果       
+        rec.t=-1.0f; //clear last result       
         
         //begin ray Tracing
+        vec3 rayTrColor=vec3(0.0f);
         if(ifHit(r,rec))
         {
-            //根据表面属性，重新计算光线方向，能量，或者计算光照进行返回
+            //according to material property, calculate lighting, new ray pos, updating param
             vec3 atten;
             Ray nextR;
+            
             if(!materialScatter(throughput, rec, r, nextR, atten, rayTrColor))
             {
                 break;
             }
+
+            Lo += throughput * rayTrColor;
             r = nextR;
+           
 			throughput *= atten;
+
+            //RR
+            if(i > 2)
+            {
+                if(rand() > RR)
+                    break;
+
+                throughput /= RR;
+            }
            
         }
         else
@@ -726,13 +866,16 @@ void main()
             //float t = 0.5 * (dir.y + 1.0);
             //bgColor = mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t);
             rayTrColor = vec3(1.0,0.0,0.0);
+            FragColor=vec4(0.0,1.0,0.0,1.0);
             break;
         }
             
     }
+
+    
      
     
-    FragColor=vec4(rayTrColor,1.0);
+    FragColor=vec4(Lo,1.0);
     
     //FragColor=vec4(0.2,0.3,0.0,1.0);
 

@@ -7,17 +7,17 @@ Scene::Scene()
 
 bool Scene::initScene()
 {
-    //初始化最外围碰撞盒
+    //init box
     glm::mat4 model=glm::mat4(1.0f);
     model=glm::translate(model,glm::vec3(1.5f,0.0f,0.0f));
     model=glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
     model=glm::scale(model,glm::vec3(10.0f));
-    Plane* left=new Plane(glm::vec3(0.8,0.3,0.3),model,0.0);
+    Plane* left=new Plane(glm::vec3(0.63f, 0.065f, 0.05f),model,0.0);
 
     model=glm::translate(glm::mat4(1.0f),glm::vec3(-1.5f,0.0f,0.0f));
     model=glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0, 0.0, 1.0));
     model=glm::scale(model,glm::vec3(10.0f));
-    Plane* right=new Plane(glm::vec3(0.3,0.8,0.3),model,1.0);
+    Plane* right=new Plane(glm::vec3(0.14f, 0.45f, 0.091f),model,1.0);
 
     model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,1.5f,0.0f));
     model=glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
@@ -27,12 +27,12 @@ bool Scene::initScene()
     model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,-1.5f,0.0f));
     //model=glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0, 0.0, 1.0));
     model=glm::scale(model,glm::vec3(10.0f));
-    Plane* bottom=new Plane(glm::vec3(0.75,0.75,0.75), model,3.0);
+    Plane* bottom=new Plane(glm::vec3(0.725f, 0.71f, 0.68f), model,3.0);
 
     model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,0.0f,-5.0f));
     model=glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
     model=glm::scale(model,glm::vec3(10.0f));
-    Plane* back=new Plane(glm::vec3(0.75,0.75,0.75), model, 4.0);
+    Plane* back=new Plane(glm::vec3(0.725f, 0.71f, 0.68f), model, 4.0);
 
     planes.push_back(left);
     planes.push_back(right);
@@ -50,19 +50,19 @@ bool Scene::initScene()
             -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, 
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
              0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
             -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, 
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
 
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
             -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
             -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
 
              0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
              0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
@@ -71,12 +71,12 @@ bool Scene::initScene()
              0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
              0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
              0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
             -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
 
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
              0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
@@ -85,27 +85,83 @@ bool Scene::initScene()
             -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
         };
-    model=glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f,-0.5f,-3.0f));
-    model =glm::rotate(model, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model=glm::scale(model,glm::vec3(1.0f));
-    Glass* g1=new Glass(v,glm::vec3(1.0f),DIFFUSE,model,8,36, planes.size()+0.0);
 
-    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.7f,0.7f,-1.5f));
+    //diffuse cube
+    // model=glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f,-0.7f,-2.5f));
+    // //model =glm::rotate(model, glm::radians(80.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // model=glm::scale(model,glm::vec3(1.0f));
+    // Glass* g1=new Glass(v,glm::vec3(0.8f,0.0f,0.9f),REFRACT,model,8,36, planes.size()+0.0);
+
+    // //glass cube
+    // model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,-1.3f,-2.5f));
+    // //model =glm::rotate(model, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // model =glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // model=glm::scale(model,glm::vec3(0.5f));
+    // Glass* g2=new Glass(v,glm::vec3(0.8f,0.8f,0.0f),REFRACT,model,8,36, planes.size()+1.0);
+
+
+    //glass matrix scene
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.7f,-1.3f,-2.5f));
+    //model =glm::rotate(model, glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g2=new Glass(v,glm::vec3(0.8f,0.2f,0.9f),REFRACT,model,8,36, planes.size()+0.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(-0.7f,-1.3f,-2.5f));
+    //model =glm::rotate(model, glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g3=new Glass(v,glm::vec3(1.0f,1.0f,1.0f),REFRACT,model,8,36, planes.size()+1.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,-1.3f,-1.8f));
+    model =glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g4=new Glass(v,glm::vec3(0.9f,0.9f,0.2f),REFRACT,model,8,36, planes.size()+2.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.0f,-1.3f,-3.2f));
+    model =glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g5=new Glass(v,glm::vec3(0.2f,0.2f,1.0f),REFRACT,model,8,36, planes.size()+3.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.5f,-1.3f,-3.0f));
+    model =glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g6=new Glass(v,glm::vec3(0.2f,0.9f,0.5f),REFRACT,model,8,36, planes.size()+4.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f,-1.3f,-3.0f));
     model =glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    //model =glm::rotate(model, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    model=glm::scale(model,glm::vec3(1.0f));
-    Glass* g2=new Glass(v,glm::vec3(1.0f),REFRACT,model,8,36, planes.size()+1.0);
-    
-    glasses.push_back(g1);
-    glasses.push_back(g2);
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g7=new Glass(v,glm::vec3(0.6f,0.3f,0.9f),REFRACT,model,8,36, planes.size()+5.0);
 
-    std::cout<<g2->type<<std::endl;
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(0.5f,-1.3f,-2.0f));
+    model =glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g8=new Glass(v,glm::vec3(0.7f,0.9f,0.3f),REFRACT,model,8,36, planes.size()+6.0);
+
+    model=glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f,-1.3f,-2.0f));
+    model =glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model=glm::scale(model,glm::vec3(0.3f,0.5f,0.1f));
+    Glass* g9=new Glass(v,glm::vec3(0.9f,0.6f,0.5f),REFRACT,model,8,36, planes.size()+7.0);
+    
+    //glasses.push_back(g1);
+    glasses.push_back(g2);
+    glasses.push_back(g3);
+    glasses.push_back(g4);
+    glasses.push_back(g5);
+    glasses.push_back(g6);
+    glasses.push_back(g7);
+    glasses.push_back(g8);
+    glasses.push_back(g9);
+  
+  
+
 
     //将glasses 的顶点信息和属性 打包进一个texture  顶点的世界位置，法线，uv 物体的颜色，是折射 镜面反射还是漫反射
     initVerticesMap(glasses);
 
     //生成光源
-    mainLight=new Light(glm::vec3(0.0f,1.2f,-2.5f), glm::vec3(0.0,-1.0f,0.0), glm::vec3(1.0f), 3.0f);
+    mainLight=new Light(glm::vec3(-1.2f,0.0f,-2.5f), glm::vec3(0.0,-1.0f,0.0), glm::vec3(1.0), 15.0f);
+    lights.push_back(*mainLight);
+
+    
 
 }
 
@@ -129,7 +185,7 @@ void Scene::initVerticesMap(std::vector<Glass*> glasses)
 
         int offset = obj * verticesTex_width;
 
-        // 1 第0像素：meta 信息
+        //1 0 pixel：meta info
         texData[offset + 0] = glm::vec4(
             (float)glasses[obj]->verticesNum, // r: 顶点数量
             (float)glasses[obj]->indicesNum,  // g: 索引数量
@@ -137,20 +193,20 @@ void Scene::initVerticesMap(std::vector<Glass*> glasses)
             0.0f                              // a: 
         );
 
-        //2 第1像素 color
+        //2 1st pixel: color
          texData[offset + 1] = glm::vec4(
             glasses[obj]->color,                         
             0.0f                              
         );
 
-        //3 2~5像素 model matrix
+        //3 2~5pixel model matrix
        
         texData[offset + 2] = glasses[obj]->model[0];
         texData[offset + 3] = glasses[obj]->model[1];
         texData[offset + 4] = glasses[obj]->model[2];
         texData[offset + 5] = glasses[obj]->model[3];
 
-        // 3 顶点数据
+        //4 vertex data (pos.xyz, u) (normal.xyz, v)
         for (size_t i = 0; i < glasses[obj]->indicesNum; ++i) {
            
             texData[offset + 6 + i*2  + 0] = glm::vec4(glasses[obj]->vertices[8*i],glasses[obj]->vertices[8*i+1],glasses[obj]->vertices[8*i+2], glasses[obj]->vertices[8*i+6]);
@@ -180,6 +236,17 @@ void Scene::updateVerticesMap(int index)
     texData[offset + 3] = glasses[index]->model[1];
     texData[offset + 4] = glasses[index]->model[2];
     texData[offset + 5] = glasses[index]->model[3];
+
+    glBindTexture(GL_TEXTURE_2D, verticesTex);
+    glTexSubImage2D(
+        GL_TEXTURE_2D,
+        0, 0, 0,
+        verticesTex_width, verticesTex_width,
+        GL_RGBA, GL_FLOAT,
+        texData.data()
+    );
+
+
 }
 
 
@@ -191,11 +258,26 @@ bool Scene::initBVH()
 void Scene::updateScene()
 {
     //rotate glasses 1
-    glm::mat4 model=glasses[0]->model;
-    model=glm::rotate(model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
-    glasses[0]->model=model;
+    // glm::mat4 model=glasses[0]->model;
+    // model=glm::rotate(model, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
+    // glasses[0]->model=model;
 
-    updateVerticesMap(0);
+    // updateVerticesMap(0);
+
+
+    //update light 
+    // float angle = glfwGetTime()*0.01; 
+
+    // glm::vec3 center = glm::vec3(0.0f, 0.0f, -2.5f);
+
+    // float radius = 1.2f;
+
+    // glm::vec3 pos;
+
+    // pos.x = center.x + cos(angle) * radius;
+    // pos.y = center.y;
+    // pos.z = center.z + sin(angle) * radius;
+    // mainLight->pos = pos;
 }
 
 void Scene::drawPlanes(Shader* shader)

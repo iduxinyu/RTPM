@@ -64,6 +64,7 @@ vec4 Filter()
     }
     if (weight>0.0001) {
         return vec4(result / weight,1.0);
+        //return vec4(filtering_colour,1.0);
     } 
     else {
         return vec4(filtering_colour,1.0);

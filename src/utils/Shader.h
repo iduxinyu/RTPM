@@ -25,6 +25,8 @@ public:
 public:
 
 	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* computePath);
+
 
 	void use();//激活某个shaderProgram
 
@@ -39,7 +41,6 @@ public:
     void setMat2(const std::string& name, glm::mat2 value) const;
     void setMat3(const std::string& name, glm::mat3 value) const;
     void setMat4(const std::string &name, glm::mat4 value) const;
-
 
 
 	~Shader();
