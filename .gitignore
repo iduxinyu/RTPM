@@ -1,4 +1,7 @@
 build/
-out/
+
+out/*
+!out/*.dll
+
 *.o
 *.exe
