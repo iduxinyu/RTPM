@@ -6,12 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/out)
 
-include_directories(include)
+
 
 # =========================
 # Windows
 # =========================
 if(WIN32)
+
+    include_directories(include/WIN)
 
     # 本地库目录
     link_directories(${PROJECT_SOURCE_DIR}/lib)
