@@ -12,7 +12,11 @@ int main()
 
     
     View view=View();
+    std::cout<<"end View"<<std::endl;
+
     view.display();
+    std::cout<<"end Display"<<std::endl;
+
 
     return 0;
 }

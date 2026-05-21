@@ -24,7 +24,7 @@ const int AXIS_Y=4;
 const int AXIS_Z=5;
 
 
-const int MaxDepth= 4;   //bounds time
+const int MaxDepth= 1;   //bounds time
 
 struct RayDesc
 {
@@ -324,6 +324,7 @@ float SpotAttenuation(vec3 L, vec3 SpotDirection, vec2 SpotAngles)
 uint GetTextureOffset(uvec2 threadIdx, int MipLevel)
 {
     uint mipW = 1 << MipLevel; //左移  miplevel=0: mipW=1 ;   mipLevel=1: mipW=2;
+    //uint mipW= pow(2,MipLevel);
 
     return mipOffset[MipLevel] + threadIdx.y * mipW + threadIdx.x;
 
@@ -348,7 +349,7 @@ bool GetSamplePos(uint threadId,
 
         value = RayCountQuadTree[nodeOffset];
 
-        pixelPos <<= 1u; //pixelPos *=2
+        pixelPos *= 2u; //pixelPos *=2
 
         if(sampleIdx >= value.b)
         {
@@ -378,7 +379,8 @@ void GetRaySample(
     out vec2 screenCoord,
     out vec2 pixelSize)
 {
-    //pixel00*=2;
+
+    
     float v00 =
       texelFetch(RayDensityTexture,
                  ivec2(pixel00),0).r;
@@ -1610,7 +1612,7 @@ void StorePhoton(RayDesc ray, CausticsUnpackedPayload hitData, uvec2 pixelCoord,
     
 	float pixelArea = GetPhotonScreenArea(posW, dPdx, dPdy, screenCoord, bInFrustum);
 	
-
+    bInFrustum=true;
 	if (bInFrustum)
 	{
 		// For dispersion
@@ -1619,7 +1621,7 @@ void StorePhoton(RayDesc ray, CausticsUnpackedPayload hitData, uvec2 pixelCoord,
 		uint pixelLoc = pixelCoord.y* LightMapSize.x + pixelCoord.x;
 
 		bool storePhoton = (pixelArea < MaxScreenRadius * MaxScreenRadius); 
-        
+        storePhoton =true;
 		uint oldV;
 
 		if (storePhoton)
@@ -1730,10 +1732,11 @@ void main()
 	}
 
     // Store photon
-	if (any(greaterThan(hitData.color, vec3(0.0))) && depth > 1 && hitData.continueFlag==0)
+	if (any(greaterThan(hitData.color, vec3(0.0))) && hitData.continueFlag==0)
     {
         // Store photons to photon buffer, and store statistics to pixel info buffer
         hitData.color *= colorIntensity;
+        
        
         StorePhoton(ray, hitData, pixelCoord, areaFactor);
     }

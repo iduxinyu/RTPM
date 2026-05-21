@@ -3,6 +3,8 @@
 Scene::Scene()
 {
     initScene();
+
+    std::cout<<"end initScene"<<std::endl;
 }
 
 bool Scene::initScene()
@@ -39,6 +41,8 @@ bool Scene::initScene()
     planes.push_back(top);
     planes.push_back(bottom);
     planes.push_back(back);
+
+    std::cout<<"end planes"<<std::endl;
 
     //创建一个glasses
     float v[] =  {
@@ -152,15 +156,20 @@ bool Scene::initScene()
     glasses.push_back(g9);
   
   
-
+    std::cout<<"end Glasses"<<std::endl;
 
     //将glasses 的顶点信息和属性 打包进一个texture  顶点的世界位置，法线，uv 物体的颜色，是折射 镜面反射还是漫反射
     initVerticesMap(glasses);
+
+    std::cout<<"end init vertices Map"<<std::endl;
 
     //生成光源
     mainLight=new Light(glm::vec3(-1.2f,0.0f,-2.5f), glm::vec3(0.0,-1.0f,0.0), glm::vec3(1.0), 15.0f);
     lights.push_back(*mainLight);
 
+    std::cout<<"end lights"<<std::endl;
+
+    return true;
     
 
 }
@@ -258,11 +267,11 @@ bool Scene::initBVH()
 void Scene::updateScene()
 {
     //rotate glasses 1
-    // glm::mat4 model=glasses[0]->model;
-    // model=glm::rotate(model, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
-    // glasses[0]->model=model;
+    glm::mat4 model=glasses[0]->model;
+    model=glm::rotate(model, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
+    glasses[0]->model=model;
 
-    // updateVerticesMap(0);
+    updateVerticesMap(0);
 
 
     //update light 

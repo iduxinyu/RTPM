@@ -44,7 +44,7 @@ public:
     GLuint VarianceTexture; //varance between current frame and last frame
 
     float intensity = 3.0f;  //for energy scale
-    float splatSize =5.0f;   //control size of  photon quad
+    float splatSize =1.0f;   //control size of  photon quad
 
     
 

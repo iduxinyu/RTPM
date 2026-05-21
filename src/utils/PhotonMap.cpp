@@ -13,7 +13,7 @@ PhotonMap::PhotonMap()
     //init
 
     std::cout<<"init Raydensity"<<std::endl;
-    initRayDensityTextures(5.0);
+    initRayDensityTextures(1.0);
     std::cout<<"init ParamsUBO"<<std::endl;
     initParamsUBO();
     std::cout<<"init PixelInfoSSBO"<<std::endl;
@@ -520,6 +520,9 @@ void PhotonMap::getPhotonCount()
     glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, photonCounterAtomic);
     glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(int), &photonCount);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
+                    GL_ATOMIC_COUNTER_BARRIER_BIT);
 }
 
 void PhotonMap::initScatterPhoton()

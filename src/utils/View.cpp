@@ -67,7 +67,9 @@ int View::initWindow()
 
 void View::initSetting()
 {
+    std::cout<<"begin initSetting"<<std::endl;
     scene=new Scene();
+
     std::cout<<"Compile Ray Trace Shader"<<std::endl;
     rayTraceShader=new Shader("../src/shaders/vScreen.vs", "../src/shaders/rayTracing.fs");
     std::cout<<"Compile gbuffer Shader"<<std::endl;
@@ -79,6 +81,7 @@ void View::initSetting()
     std::cout<<"Compile temporal Shader"<<std::endl;
     temporalShader=new Shader("../src/shaders/vScreen.vs", "../src/shaders/temporalDenoise.fs");
     
+    std::cout<<"end Scene Shader"<<std::endl;
 
     //Photon Shader
     std::cout<<"Compile updateRayDensity Shader"<<std::endl;
@@ -94,13 +97,17 @@ void View::initSetting()
     std::cout<<"Compile caustics blended result Shader"<<std::endl;
     blendCausticsShader=new Shader("../src/shaders/photonFilter.cs");
 
-    mainCamera=new Camera(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -35.0f);
+    std::cout<<"end photon shader"<<std::endl;
 
+    //mainCamera=new Camera(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -35.0f);
+    mainCamera=new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     lightCamera=new Camera(scene->mainLight->pos, glm::vec3(0.0f, 0.0f, -1.0f), 0.0f, -90.0f,90.0f);
 
     screen=new Quad();
 
     photonMap=new PhotonMap();
+
+    std::cout<<"end camera screen PhotonMap"<<std::endl;
 
     initGBuffer();
     initShadowBuffer();
@@ -109,6 +116,8 @@ void View::initSetting()
     initFilterMap();
 
     initRayTraceBuffer(gCaustic_fbo, gCaustics); //for photon Map;
+
+    std::cout<<"end init Buffer"<<std::endl;
     
 
 }
@@ -560,11 +569,15 @@ void View::updateRayDensity()
 
 int View::display()
 {
-    
+    std::cout<<"begin Display"<<std::endl;
+
     //基本的初始化设置
     initSetting();
     //Quad for rayTracing
     //Quad screen;
+
+    std::cout<<"end initSetting"<<std::endl;
+
 
     frameID=0;
 
@@ -573,6 +586,8 @@ int View::display()
 
     while(!glfwWindowShouldClose(window))
     {
+        std::cout<<"begin render loop"<<std::endl;
+
         frameID++;
 
         float currentFrame = (float)glfwGetTime();
@@ -608,12 +623,12 @@ int View::display()
         photonMap->emitPhotons(*emitPhotonShader, photonMap->gRayDensityTexA, scene->verticesTex, glm::vec2((float)scene->verticesTex_width), gDepth, *mainCamera, scene->glasses.size());
 
         //[photon mapping] pass 3: update ray density
-        photonMap->updateRayDensity(*updateRayDensityShader, photonMap->gRayDensityTexA, photonMap->gRayDensityTexB);
+        // photonMap->updateRayDensity(*updateRayDensityShader, photonMap->gRayDensityTexA, photonMap->gRayDensityTexB);
 
-         GLuint tempRayDensity;
-         tempRayDensity=photonMap->gRayDensityTexA;
-         photonMap->gRayDensityTexA=photonMap->gRayDensityTexB;
-         photonMap->gRayDensityTexB=tempRayDensity;
+        //  GLuint tempRayDensity;
+        //  tempRayDensity=photonMap->gRayDensityTexA;
+        //  photonMap->gRayDensityTexA=photonMap->gRayDensityTexB;
+        //  photonMap->gRayDensityTexB=tempRayDensity;
 
 
         //[photon mapping] pass 4: scattering photons

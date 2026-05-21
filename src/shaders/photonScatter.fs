@@ -235,7 +235,7 @@ void main()
 	float photonScreenArea = fs_in.color.a;
 	float photonFootprint = dot(fs_in.texcoord.xy, fs_in.texcoord.xy) * photonScreenArea < screenPhotonRadius * screenPhotonRadius ? 1 : 0;
 
-    FragColor = vec4(LightingColor*alpha, photonFootprint);
+    FragColor = vec4(LightingColor, 1.0);
     //FragColor = vec4(LightingColor, 1.0);
 
     //FragColor = vec4(abs(sceneViewDepth), 0.0,0.0,1.0);

@@ -45,9 +45,20 @@ endif()
 # =========================
 if(UNIX)
 
-    find_package(OpenGL REQUIRED)
-    find_package(glfw3 REQUIRED)
-    find_package(assimp REQUIRED)
+
+    # find_package(OpenGL REQUIRED)
+    # find_package(glfw3 REQUIRED)
+    # find_package(assimp REQUIRED)
+
+    link_directories(${PROJECT_SOURCE_DIR}/lib)
+   
+
+    include_directories(${PROJECT_SOURCE_DIR}/include/UNIX/glfw/include
+        ${PROJECT_SOURCE_DIR}/include/UNIX/glm
+        ${PROJECT_SOURCE_DIR}/include/UNIX/imgui
+        ${PROJECT_SOURCE_DIR}/include/UNIX/spdlog
+        ${PROJECT_SOURCE_DIR}/include/UNIX/imgui/backends
+        ${PROJECT_SOURCE_DIR}/include/UNIX/glad/include)
 
 endif()
 
@@ -75,13 +86,6 @@ if(WIN32)
     )
 
 elseif(UNIX)
-
-    target_link_libraries(main
-        glfw
-        assimp::assimp
-        OpenGL::GL
-        pthread
-        dl
-    )
+     target_link_libraries(main PRIVATE /usr/lib/x86_64-linux-gnu/libglfw.so.3)
 
 endif()
