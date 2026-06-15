@@ -44,7 +44,7 @@ bool Scene::initScene()
 
     std::cout<<"end planes"<<std::endl;
 
-    //创建一个glasses
+    //cube 
     float v[] =  {
             //---position------   --Normal--           --texCoord-  
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
@@ -158,12 +158,13 @@ bool Scene::initScene()
   
     std::cout<<"end Glasses"<<std::endl;
 
-    //将glasses 的顶点信息和属性 打包进一个texture  顶点的世界位置，法线，uv 物体的颜色，是折射 镜面反射还是漫反射
+    //Pack the glasses' vertex data and material attributes into a texture, 
+    //including world-space position, normal, UV coordinates, object color, and material type (refraction, specular reflection, or diffuse reflection).
     initVerticesMap(glasses);
 
     std::cout<<"end init vertices Map"<<std::endl;
 
-    //生成光源
+    //light source
     mainLight=new Light(glm::vec3(-1.2f,0.0f,-2.5f), glm::vec3(0.0,-1.0f,0.0), glm::vec3(1.0), 15.0f);
     lights.push_back(*mainLight);
 
@@ -186,8 +187,7 @@ void Scene::initVerticesMap(std::vector<Glass*> glasses)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 
-    //填充数据到Tex  后期可以并行到cuda
-
+    //fill data into tex, and use cuda later
     texData.assign(verticesTex_width * verticesTex_width, glm::vec4(0.0f));
 
     for (int obj = 0; obj < glasses.size(); ++obj) {
@@ -196,9 +196,9 @@ void Scene::initVerticesMap(std::vector<Glass*> glasses)
 
         //1 0 pixel：meta info
         texData[offset + 0] = glm::vec4(
-            (float)glasses[obj]->verticesNum, // r: 顶点数量
-            (float)glasses[obj]->indicesNum,  // g: 索引数量
-            (float)glasses[obj]->type,        // b: 材质类型                          
+            (float)glasses[obj]->verticesNum, // r: vertices number
+            (float)glasses[obj]->indicesNum,  // g: inidces number
+            (float)glasses[obj]->type,        // b: material type                          
             0.0f                              // a: 
         );
 
@@ -226,7 +226,7 @@ void Scene::initVerticesMap(std::vector<Glass*> glasses)
        
     }
 
-    //绑到对应tex 上
+    //bind into tex
     glBindTexture(GL_TEXTURE_2D, verticesTex);
     glTexSubImage2D(
         GL_TEXTURE_2D,
@@ -267,11 +267,11 @@ bool Scene::initBVH()
 void Scene::updateScene()
 {
     //rotate glasses 1
-    glm::mat4 model=glasses[0]->model;
-    model=glm::rotate(model, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
-    glasses[0]->model=model;
+    // glm::mat4 model=glasses[0]->model;
+    // model=glm::rotate(model, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
+    // glasses[0]->model=model;
 
-    updateVerticesMap(0);
+    // updateVerticesMap(0);
 
 
     //update light 

@@ -13,7 +13,7 @@ PhotonMap::PhotonMap()
     //init
 
     std::cout<<"init Raydensity"<<std::endl;
-    initRayDensityTextures(1.0);
+    initRayDensityTextures(5.0);
     std::cout<<"init ParamsUBO"<<std::endl;
     initParamsUBO();
     std::cout<<"init PixelInfoSSBO"<<std::endl;
@@ -185,7 +185,7 @@ void PhotonMap::updateRayDensity(Shader shader, GLuint rayDensitySourceTex, GLui
 
     std::cout<<"end rayden"<<std::endl;
 
-    // ✔ 只需要一次
+    
     glMemoryBarrier(
         GL_SHADER_IMAGE_ACCESS_BARRIER_BIT |
         GL_TEXTURE_FETCH_BARRIER_BIT |
@@ -410,13 +410,13 @@ void PhotonMap::initVarianceTexture()
 
     glTexImage2D(GL_TEXTURE_2D,
              0,
-             GL_R32F,              // 单通道 float（推荐）
+             GL_R32F,              // single pannel float
              SCR_WIDTH,
              SCR_HEIGHT,
              0,
              GL_RED,
              GL_FLOAT,
-             nullptr);             // ❗不传数据（只分配）
+             nullptr);             // no data
 
     // 采样参数
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -502,7 +502,7 @@ void PhotonMap::emitPhotons(Shader shader, GLuint currentRayDensityTexture, GLui
         1
     );
 
-    // 保证 SSBO 写入完成
+   
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
                     GL_ATOMIC_COUNTER_BARRIER_BIT);
 
@@ -541,8 +541,8 @@ void PhotonMap::scatterPhotons(GLuint fbo, Shader shader, Camera camera, GLuint 
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
     //state
-    glDisable(GL_DEPTH_TEST);   // ❗ 必须
-    glDepthMask(GL_FALSE);      // 不写 depth
+    glDisable(GL_DEPTH_TEST);   
+    glDepthMask(GL_FALSE);      
 
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);

@@ -47,7 +47,7 @@ public:
     float Near;
     float Far;
 
-    // constructor with vectors,因为实际上Front 由Yaw 和Pitch 生成，实际上这里Front传参没用
+    // constructor with vectors, current Front vector is useless
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH, float zoom=ZOOM, float near=NEAR, float far=FAR) : Front(glm::vec3(0.0f, 0.0f, -1.0f)),  MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY)
     {
         Position = position;
@@ -152,7 +152,7 @@ public:
 
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles
-    void updateCameraVectors()  //绕Y 逆时针， 从x 绕向z
+    void updateCameraVectors()  //Counter-clockwise rotation around the Y-axis
     {
         // calculate the new Front vector
         glm::vec3 front;

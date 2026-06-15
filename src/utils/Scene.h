@@ -36,8 +36,8 @@ public:
 public:
     Scene();
 
-    void initSetting(); //进行一些初始化设置
-    bool initScene(); //设置场景，布置物体，并打包信息到Texture
+    void initSetting(); //init setting
+    bool initScene(); //set scene and package into tex
     void initVerticesMap(std::vector<Glass*> glasses);
     void updateVerticesMap(int index);
     bool initBVH();

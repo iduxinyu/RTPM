@@ -10,8 +10,8 @@ int fbh=SCR_HEIGHT;
 View::View()
 {
     
-    initWindow();//初始化窗口
-                 //初始化参数和设置
+    initWindow();
+                
     
 }
 
@@ -50,9 +50,9 @@ int View::initWindow()
         return -1;
     }    
 
-    // 获取 framebuffer 的真实尺寸并设置视口
+   
     glfwGetFramebufferSize(window, &fbw, &fbh);
-    glViewport(0, 0, fbw, fbh);  // 设置为 framebuffer 尺寸而不是逻辑窗口尺寸
+    glViewport(0, 0, fbw, fbh);  
 
  
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
@@ -99,8 +99,8 @@ void View::initSetting()
 
     std::cout<<"end photon shader"<<std::endl;
 
-    //mainCamera=new Camera(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -35.0f);
-    mainCamera=new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    mainCamera=new Camera(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -35.0f);
+    //mainCamera=new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     lightCamera=new Camera(scene->mainLight->pos, glm::vec3(0.0f, 0.0f, -1.0f), 0.0f, -90.0f,90.0f);
 
     screen=new Quad();
@@ -330,7 +330,7 @@ void View::renderShadowMap()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    //绘制
+    //draw scene
     scene->drawPlanes(shadowMapShader);
     scene->drawGlasses(shadowMapShader);
     glBindVertexArray(0);
@@ -571,7 +571,7 @@ int View::display()
 {
     std::cout<<"begin Display"<<std::endl;
 
-    //基本的初始化设置
+    
     initSetting();
     //Quad for rayTracing
     //Quad screen;
@@ -623,12 +623,12 @@ int View::display()
         photonMap->emitPhotons(*emitPhotonShader, photonMap->gRayDensityTexA, scene->verticesTex, glm::vec2((float)scene->verticesTex_width), gDepth, *mainCamera, scene->glasses.size());
 
         //[photon mapping] pass 3: update ray density
-        // photonMap->updateRayDensity(*updateRayDensityShader, photonMap->gRayDensityTexA, photonMap->gRayDensityTexB);
+        photonMap->updateRayDensity(*updateRayDensityShader, photonMap->gRayDensityTexA, photonMap->gRayDensityTexB);
 
-        //  GLuint tempRayDensity;
-        //  tempRayDensity=photonMap->gRayDensityTexA;
-        //  photonMap->gRayDensityTexA=photonMap->gRayDensityTexB;
-        //  photonMap->gRayDensityTexB=tempRayDensity;
+         GLuint tempRayDensity;
+         tempRayDensity=photonMap->gRayDensityTexA;
+         photonMap->gRayDensityTexA=photonMap->gRayDensityTexB;
+         photonMap->gRayDensityTexB=tempRayDensity;
 
 
         //[photon mapping] pass 4: scattering photons

@@ -77,10 +77,4 @@ public:
     void updateRayDensity();
 
 
-private:
-    //回调函数
-    //void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-    //void processInput(GLFWwindow *window);
-
-
 };

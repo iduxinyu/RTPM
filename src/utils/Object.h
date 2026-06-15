@@ -52,17 +52,17 @@ public:
         };
 
         glGenVertexArrays(1, &VAO);
-	    glBindVertexArray(VAO);//绑定VAO
+	    glBindVertexArray(VAO);
 	    
-	    glGenBuffers(1, &VBO);//生成ID，并给予缓冲
-	    glBindBuffer(GL_ARRAY_BUFFER, VBO);//把VBO绑到GL_ARRAY_BUFFER上代表VBO是一个顶点缓冲
-	    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//把vertices放到顶点缓存中
+	    glGenBuffers(1, &VBO);
+	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        //链接顶点属性，告诉GPU如何理解传入的顶点数据
-	    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); //连接到GL_ARRAY_BUFFER绑定的VBO
+        
+	    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); 
 	    glEnableVertexAttribArray(0);
 
-	    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2*sizeof(float))); //连接到GL_ARRAY_BUFFER绑定的VBO
+	    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2*sizeof(float))); 
 	    glEnableVertexAttribArray(1);
 
         glBindVertexArray(0);
@@ -74,7 +74,7 @@ public:
 
     ~Quad()
     {
-        ///释放资源
+        
 	    glDeleteVertexArrays(1, &VAO);
 	    glDeleteBuffers(1, &VBO);
     }
@@ -110,22 +110,22 @@ public:
         };
 
         glGenVertexArrays(1, &VAO);
-	    glBindVertexArray(VAO);//绑定VAO
+	    glBindVertexArray(VAO);
 	    
-	    glGenBuffers(1, &VBO);//生成ID，并给予缓冲
-	    glBindBuffer(GL_ARRAY_BUFFER, VBO);//把VBO绑到GL_ARRAY_BUFFER上代表VBO是一个顶点缓冲
-	    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//把vertices放到顶点缓存中
+	    glGenBuffers(1, &VBO);
+	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        //链接顶点属性，告诉GPU如何理解传入的顶点数据
-	    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); //连接到GL_ARRAY_BUFFER绑定的VBO
+       
+	    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); 
 	    glEnableVertexAttribArray(0);
 
-	    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); //连接到GL_ARRAY_BUFFER绑定的VBO
+	    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); 
 	    glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float))); //连接到GL_ARRAY_BUFFER绑定的VBO
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float))); 
 	    glEnableVertexAttribArray(2);
-        glBindVertexArray(0);//解绑
+        glBindVertexArray(0);
 
         this->color=color;
         this->model=model;
@@ -149,7 +149,7 @@ public:
 
     ~Plane()
     {
-        ///释放资源
+        
 	    glDeleteVertexArrays(1, &VAO);
 	    glDeleteBuffers(1, &VBO);
     }
@@ -169,8 +169,8 @@ public:
     glm::vec3 color;
     MATERIAL type;
     glm::mat4 model;
-    int verticesNum;//顶点数量
-    int indicesNum; //顶点对应的索引数量
+    int verticesNum;//vertex number
+    int indicesNum; //index number
 
     int objID;
 
@@ -182,22 +182,21 @@ public:
        this->vertices=vertices;
 
         glGenVertexArrays(1, &VAO);
-	    glBindVertexArray(VAO);//绑定VAO
+	    glBindVertexArray(VAO);
 	    
-	    glGenBuffers(1, &VBO);//生成ID，并给予缓冲
-	    glBindBuffer(GL_ARRAY_BUFFER, VBO);//把VBO绑到GL_ARRAY_BUFFER上代表VBO是一个顶点缓冲
-	    glBufferData(GL_ARRAY_BUFFER, indicesNum*8*sizeof(float), vertices, GL_STATIC_DRAW);//把vertices放到顶点缓存中
+	    glGenBuffers(1, &VBO);
+	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	    glBufferData(GL_ARRAY_BUFFER, indicesNum*8*sizeof(float), vertices, GL_STATIC_DRAW);
 
-        //链接顶点属性，告诉GPU如何理解传入的顶点数据
-	    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); //连接到GL_ARRAY_BUFFER绑定的VBO
+      
+	    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); 
 	    glEnableVertexAttribArray(0);
 
-	    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); //连接到GL_ARRAY_BUFFER绑定的VBO
+	    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); 
 	    glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float))); //连接到GL_ARRAY_BUFFER绑定的VBO
-	    glEnableVertexAttribArray(2);
-        glBindVertexArray(0);//解绑
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+        glBindVertexArray(0);
 
         this->color=color;
         this->type=type;
@@ -224,7 +223,7 @@ public:
 
     ~Glass()
     {
-        ///释放资源
+       
 	    glDeleteVertexArrays(1, &VAO);
 	    glDeleteBuffers(1, &VBO);
     }

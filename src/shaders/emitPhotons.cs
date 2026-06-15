@@ -24,7 +24,7 @@ const int AXIS_Y=4;
 const int AXIS_Z=5;
 
 
-const int MaxDepth= 1;   //bounds time
+const int MaxDepth= 4;   //bounds time
 
 struct RayDesc
 {
@@ -849,7 +849,7 @@ hitData.color *= color0 * Intensity/ (SplatSize * SplatSize);
 
 
 // -----------------------------
-// 工具函数
+// tool
 // -----------------------------
 
 float saturate(float x)
@@ -1097,7 +1097,7 @@ bool hitPlane(RayDesc r, inout HitRecord rec)
 
 bool ifHitTri(vec3 v1, vec3 v2, vec3 v3, vec3 n, RayDesc r, out float t)
 {
-     //和三角形所在的面判断交点
+     //intersect with triangle
     t=dot(v1-r.o,n)/dot(r.d,n);
 
     if(t<=0.00001)
@@ -1106,7 +1106,7 @@ bool ifHitTri(vec3 v1, vec3 v2, vec3 v3, vec3 n, RayDesc r, out float t)
     }
 
     vec3 p=r.o+t*r.d;
-    //然后判断是否在三角形内
+    //whether in triangle
     vec3 c1=cross(v2-v1,p-v1);
     vec3 c2=cross(v3-v2,p-v2);
     vec3 c3=cross(v1-v3,p-v3);
@@ -1144,18 +1144,18 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
         //get index number
         vec4 info=texture(verticesTex,vec2(0.5, i+0.5)/verticesTexSize);
         float indicesNum=info.g;
-        //获得model矩阵
+        //read model matrix
         mat4 model=mat4(texture(verticesTex,vec2(2.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(3.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(4.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(5.5, i+0.5)/verticesTexSize));
 
-        //将ray 转换object space
+        //transform into object space
         RayDesc localR=world2Local(r, model);
        
 
-        //3个一组读取顶点信息进行碰撞检测
-        float localMinT=-1.0f; // 对应obj Space 的t
+        //3 vertex for collision
+        float localMinT=-1.0f; // t in object space
         int localMinIdx=-1;
         vec3 localMinN=vec3(0.0f);
         vec3 localv1=vec3(0.0f);
@@ -1173,7 +1173,7 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
             vec4 v2=texture(verticesTex,vec2(x1+2,y)/verticesTexSize);
             vec4 v3=texture(verticesTex,vec2(x1+4,y)/verticesTexSize);
 
-            //采样法线
+            //sample normal
             vec4 n1=texture(verticesTex,vec2(x1+1,y)/verticesTexSize);
             vec4 n2=texture(verticesTex,vec2(x1+3,y)/verticesTexSize);
             vec4 n3=texture(verticesTex,vec2(x1+5,y)/verticesTexSize);
@@ -1203,7 +1203,7 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
             }
         }
 
-        //将localMinT 转换成 world space 和 minT 做比较 并更新 minT 和 index
+        //transform object localMinT into world space minT, and pdate 
         if(localMinT>0.0f) //该物体存在碰撞才有意义
         {
             vec3 localP=localR.o+localMinT*localR.d;
@@ -1226,11 +1226,11 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
         }
     }
 
-    if(minT <=0.0000001f) //太小说明失败，不用特意更新了
+    if(minT <=0.0000001f) //too small, false, for avoiding self collision
         return false;
 
-    //根据 minT 和 index 采样并插值计算 normal color 等 并填充 hitrecord
-    if(rec.t<=0.0f || minT<rec.t) //此时rec 中没有碰撞信息， 或者现在的碰撞信息 比record 中的距离更近，就更新
+    //update hit record
+    if(rec.t<=0.0f || minT<rec.t) //if no hit record or better hit pos, update hit record
     {
         rec.t=minT;
         rec.color=texture(verticesTex,vec2(1.5,minObjIdx+0.5)/verticesTexSize).xyz;
@@ -1248,7 +1248,7 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
 
 bool ifHit(RayDesc r, inout HitRecord rec)
 {
-    //判断最外面的墙
+  
     hitPlane(r,rec);
 
     hitGlasses(r,rec);
@@ -1463,16 +1463,16 @@ bool IsInFrustumZ(vec4 p)
     if (p.z < 0.0 || p.z > 1.0)
         return false;
 
-    // 边缘区域直接通过（避免 depth 误差）
+    // Directly pass through boundary regions to avoid depth errors
     if (any(greaterThan(abs(p.xy), vec2(0.99))))
         return true;
 
-    // NDC → 像素坐标
+    // NDC → pixel coordinate
     vec2 uv = (p.xy + 1.0) * 0.5 * ViewportDim; //->[0,1]
 
     ivec2 iuv = ivec2(uv);
 
-    // 读取 depth（等价 HLSL .Load）
+    // read depth
     float depth = texelFetch(SceneDepthBuffer, iuv, 0).r * 2.0 - 1.0; //->[0,1]
 
     // occlusion test
@@ -1612,7 +1612,7 @@ void StorePhoton(RayDesc ray, CausticsUnpackedPayload hitData, uvec2 pixelCoord,
     
 	float pixelArea = GetPhotonScreenArea(posW, dPdx, dPdy, screenCoord, bInFrustum);
 	
-    bInFrustum=true;
+    
 	if (bInFrustum)
 	{
 		// For dispersion
@@ -1621,7 +1621,7 @@ void StorePhoton(RayDesc ray, CausticsUnpackedPayload hitData, uvec2 pixelCoord,
 		uint pixelLoc = pixelCoord.y* LightMapSize.x + pixelCoord.x;
 
 		bool storePhoton = (pixelArea < MaxScreenRadius * MaxScreenRadius); 
-        storePhoton =true;
+        
 		uint oldV;
 
 		if (storePhoton)
@@ -1732,7 +1732,7 @@ void main()
 	}
 
     // Store photon
-	if (any(greaterThan(hitData.color, vec3(0.0))) && hitData.continueFlag==0)
+	if (any(greaterThan(hitData.color, vec3(0.0))) && depth>1 && hitData.continueFlag==0)
     {
         // Store photons to photon buffer, and store statistics to pixel info buffer
         hitData.color *= colorIntensity;

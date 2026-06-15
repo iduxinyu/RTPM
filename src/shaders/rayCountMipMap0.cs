@@ -50,6 +50,7 @@ void main()
     float v12 = texelFetch(RayDensityTexture, pixel00 + ivec2(1,2), 0).r;
     float v22 = texelFetch(RayDensityTexture, pixel00 + ivec2(2,2), 0).r;
 
+
     uint count00 = GetSampleCount(v00, v10, v01, v11);
     uint count10 = count00 + GetSampleCount(v10, v20, v11, v21);
     uint count01 = count10 + GetSampleCount(v01, v11, v02, v12);

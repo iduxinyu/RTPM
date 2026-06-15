@@ -34,11 +34,7 @@ float SmoothKernel(float x)
     return x * x * (2.0 * x - 3.0) + 1.0;
 }
 
-float LinearizeDepth(float depth)
-{
-    // 如果你是标准 OpenGL depth
-    return depth;
-}
+
 
 // -----------------------------
 // Utility
@@ -62,7 +58,6 @@ float D_GGX(float a2, float NoH)
 
 // -----------------------------
 // Implicit visibility (very cheap)
-// UE 这里是极简版本
 // -----------------------------
 float Vis_Implicit()
 {
@@ -86,7 +81,7 @@ vec3 Diffuse_Lambert(vec3 DiffuseColor)
 }
 
 // -----------------------------
-// Energy terms（简化版 UE）
+// Energy terms
 // -----------------------------
 struct EnergyTerms
 {
@@ -94,12 +89,12 @@ struct EnergyTerms
     float specularFactor;
 };
 
-// UE 原版更复杂，这里做工程近似（足够稳定）
+
 EnergyTerms ComputeGGXSpecEnergyTerms(float roughness, float NoV, vec3 SpecularColor)
 {
     EnergyTerms e;
 
-    // 简化：根据 specular 强度削弱 diffuse
+
     float specEnergy = max(max(SpecularColor.r, SpecularColor.g), SpecularColor.b);
 
     e.specularFactor = 1.0;
@@ -119,7 +114,7 @@ float ComputeEnergyConservation(EnergyTerms e)
 }
 
 // -----------------------------
-// ✅ SimpleShading（核心）
+// SimpleShading
 // -----------------------------
 vec3 SimpleShading(
     vec3 DiffuseColor,
@@ -235,7 +230,7 @@ void main()
 	float photonScreenArea = fs_in.color.a;
 	float photonFootprint = dot(fs_in.texcoord.xy, fs_in.texcoord.xy) * photonScreenArea < screenPhotonRadius * screenPhotonRadius ? 1 : 0;
 
-    FragColor = vec4(LightingColor, 1.0);
+    FragColor = vec4(LightingColor*alpha, photonFootprint);
     //FragColor = vec4(LightingColor, 1.0);
 
     //FragColor = vec4(abs(sceneViewDepth), 0.0,0.0,1.0);

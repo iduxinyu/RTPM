@@ -115,7 +115,7 @@ void main()
     float screenArea = length(areaVec) / (dist * dist) * length(ScreenDim);
 
     //world Position of the quad
-    vec2 v = quad[gl_VertexID];  //确定是quad 上的哪个顶点
+    vec2 v = quad[gl_VertexID];  //determine which vertex on quad
     vec3 localPoint = tangent * v.x + bitangent * v.y;
     vec4 worldPos = vec4(localPoint + Position, 1.0);
 
@@ -126,7 +126,7 @@ void main()
 
     vs_out.normal = normal;
     vs_out.texcoord = v;
-    vs_out.lightDir = Direction;  //入射光线方向
+    vs_out.lightDir = Direction;  
     vs_out.color = vec4(Color, screenArea);
 
 

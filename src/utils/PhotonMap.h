@@ -44,7 +44,7 @@ public:
     GLuint VarianceTexture; //varance between current frame and last frame
 
     float intensity = 3.0f;  //for energy scale
-    float splatSize =1.0f;   //control size of  photon quad
+    float splatSize =5.0f;   //control size of  photon quad
 
     
 
@@ -58,7 +58,7 @@ public:
     GLuint photonVAO;
     
 
-    float MaxAnisotropy=10.0; //去掉那种细长的焦散
+    float MaxAnisotropy=10.0; //for deleting thin caustics
 
     //filter
     GLuint blendedResult;

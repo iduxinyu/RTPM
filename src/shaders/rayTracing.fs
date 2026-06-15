@@ -286,9 +286,9 @@ bool hitPlane(Ray r, inout HitRecord rec)
     if(minT>0){
        
         rec.position = r.o + r.d * rec.t;
-        // 法线总与入射相反
+        // normal maybe opposite to ray direction
         //if (dot(rec.normal, r.d) > 0.0) rec.normal = -rec.normal;
-        // 交点偏移，避免自相交
+        // shift intersection for avoiding self intersection
         rec.position += rec.normal * 1e-3;
         return true;
     }
@@ -298,7 +298,7 @@ bool hitPlane(Ray r, inout HitRecord rec)
 
 bool ifHitTri(vec3 v1, vec3 v2, vec3 v3, vec3 n, Ray r, out float t)
 {
-     //和三角形所在的面判断交点
+     //whether intersect with tri
     t=dot(v1-r.o,n)/dot(r.d,n);
 
     if(t<=0.0)
@@ -307,7 +307,7 @@ bool ifHitTri(vec3 v1, vec3 v2, vec3 v3, vec3 n, Ray r, out float t)
     }
 
     vec3 p=r.o+t*r.d;
-    //然后判断是否在三角形内
+    //whether inside tri
     vec3 c1=cross(v2-v1,p-v1);
     vec3 c2=cross(v3-v2,p-v2);
     vec3 c3=cross(v1-v3,p-v3);
@@ -336,22 +336,22 @@ bool hitGlasses(Ray r, inout HitRecord rec)
     float tempT=-1.0f;
     for(int i=0;i<objNum;i++)
     {
-        //对于glasses[i]
-        //获得索引数数量
+        //for glass i
+        //get index number
         vec4 info=texture(verticesTex,vec2(0.5, i+0.5)/verticesTexSize);
         float indicesNum=info.g;
-        //获得model矩阵
+        //get model matrix
         mat4 model=mat4(texture(verticesTex,vec2(2.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(3.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(4.5, i+0.5)/verticesTexSize),
                         texture(verticesTex,vec2(5.5, i+0.5)/verticesTexSize));
 
-        //将ray 转换object space
+        //transform into object space
         Ray localR=world2Local(r, model);
        
 
-        //3个一组读取顶点信息进行碰撞检测
-        float localMinT=-1.0f; // 对应obj Space 的t
+        //3 vertices 1 group for collision 
+        float localMinT=-1.0f; // t in obj space
         int localMinIdx=-1;
         vec3 localMinN=vec3(0.0f);
         for(int j=0;j<indicesNum;j+=3)
@@ -362,7 +362,7 @@ bool hitGlasses(Ray r, inout HitRecord rec)
             vec3 v2=texture(verticesTex,vec2(x1+2,y)/verticesTexSize).xyz;
             vec3 v3=texture(verticesTex,vec2(x1+4,y)/verticesTexSize).xyz;
 
-            //采样法线
+            //sample normal
             vec3 n=texture(verticesTex,vec2(x1+1,y)/verticesTexSize).xyz;
 
             if(ifHitTri(v1,v2,v3,n,localR,tempT))
@@ -376,7 +376,7 @@ bool hitGlasses(Ray r, inout HitRecord rec)
             }
         }
 
-        //将localMinT 转换成 world space 和 minT 做比较 并更新 minT 和 index
+        //transform localMinT into world space and compare with minT, if smaller than minT, update
         if(localMinT>0.0f) //该物体存在碰撞才有意义
         {
             vec3 localP=localR.o+localMinT*localR.d;
@@ -395,11 +395,11 @@ bool hitGlasses(Ray r, inout HitRecord rec)
         }
     }
 
-    if(minT <=0.0000001f) //太小说明失败，不用特意更新了
+    if(minT <=0.0000001f) 
         return false;
 
-    //根据 minT 和 index 采样并插值计算 normal color 等 并填充 hitrecord
-    if(rec.t<=0.0f || minT<rec.t) //此时rec 中没有碰撞信息， 或者现在的碰撞信息 比record 中的距离更近，就更新
+    //fill hit record
+    if(rec.t<=0.0f || minT<rec.t) //no info in hit record, or better than hit record, update
     {
         rec.t=minT;
 	    rec.position=r.o+minT*r.d;
@@ -427,12 +427,12 @@ bool ifHit(Ray r, inout HitRecord rec)
 
 bool ifInShadow(vec3 position)
 {
-    //计算当前点的的LightSpace 坐标
+    //transform into shadow space
     vec4 shadowPos=shadowTrans*vec4(position,1.0);
     shadowPos/=shadowPos.w;
 
-    //判断是否在shadowMap 中， 如果不在算能被直接照亮
-    shadowPos.xyz=shadowPos.xyz*0.5+0.5; //转换到 [0,1]空间
+    //whether in shadow map
+    shadowPos.xyz=shadowPos.xyz*0.5+0.5; //into [0,1]
     if(shadowPos.x<=0.0 ||shadowPos.x>=1.0 || shadowPos.y<=0.0 ||shadowPos.y>=1.0)
         return false;
 
@@ -723,9 +723,9 @@ bool materialScatter(vec3 throughput, HitRecord rec, Ray r,out Ray nextR, out ve
 bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
 {   
    
-    //采样法线
+    //sample normal
     vec3 normal=texture(gNormal,TexCoords).xyz;
-    //采样世界空间
+    //sample pos
     vec3 position=texture(gPosition,TexCoords).xyz;
 
     vec4 color_mat=texture(gColor,TexCoords);
@@ -741,12 +741,12 @@ bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
         //nextR.d = normalize(reflect(-v,normal));
 
        
-        //采样颜色
+        //color
         //atten=BRDF_BlinnPhong(normal, v, l, color_mat.xyz, vec3(0.05),4.0);
         atten=BRDF_CookTorrance(normal, v, l, color_mat.xyz, 0.0, 1.0);
       
         
-        //如果在shadow 中
+        //if in shadow
         //if(!ifInShadow(position))
             //directLight+=compute_direct_light(light.color*light.intensity, normal, v, l, color_mat.xyz, vec3(0.05),4.0);
             directLight=compute_direct_light_PBR(light.color*light.intensity, normal, v, l, color_mat.xyz, 0.0, 1.0);
@@ -774,14 +774,14 @@ bool firstJump(out Ray nextR, out vec3 atten, inout vec3 directLight)
         }
 
     
-        if(rand() < reflect_prob){ //反射
+        if(rand() < reflect_prob){ //reflect
             
             nextR.d = normalize(reflect(v,normal));
             nextR.o = position+normal*offset;
             atten = vec3(reflect_prob); 
             
 	    }
-	    else{   //折射
+	    else{   //refract
            
             nextR.d = normalize(refractRay);
             nextR.o = position-normal*offset;

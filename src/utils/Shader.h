@@ -4,7 +4,7 @@
 #define SHADER_H
 
 
-#include <glad/glad.h>// 包含glad来获取所有的必须OpenGL头文件
+#include <glad/glad.h>
 
 #include <string>
 #include <fstream>
@@ -20,7 +20,7 @@ class Shader
 {
 public:
 
-	unsigned int ID; //shaderProgram ID
+	unsigned int ID; 
 
 public:
 
@@ -28,9 +28,9 @@ public:
 	Shader(const char* computePath);
 
 
-	void use();//激活某个shaderProgram
+	void use();
 
-	//为shader中的uniform变量设置值
+	
 	void setBool(const std::string &name, bool value) const;
 	void setInt(const std::string &name, int value) const;
 	void setFloat(const std::string &name, float value) const;
