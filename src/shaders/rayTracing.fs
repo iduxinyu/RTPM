@@ -414,7 +414,7 @@ bool hitGlasses(Ray r, inout HitRecord rec)
 
 bool ifHit(Ray r, inout HitRecord rec)
 {
-    //判断最外面的墙
+    
     hitPlane(r,rec);
 
     hitGlasses(r,rec);
@@ -436,7 +436,7 @@ bool ifInShadow(vec3 position)
     if(shadowPos.x<=0.0 ||shadowPos.x>=1.0 || shadowPos.y<=0.0 ||shadowPos.y>=1.0)
         return false;
 
-    //采样shadowMap
+    //sample shadowMap
     float shadowMapD=texture(shadowMap,shadowPos.xy).x;
     float bias = 0.00005;
     if (shadowPos.z - bias > shadowMapD)
@@ -812,7 +812,6 @@ void main()
 {
     
     initRNG();
-    //初始化碰撞盒
     initWall();
 
     HitRecord rec;

@@ -108,7 +108,7 @@ void main()
     tangent   *= SplatSize;
     bitangent *= SplatSize;
 
-    // screen footprint（用于优化）
+    // screen footprint
     vec3 areaVec = cross(tangent, bitangent);
     vec3 viewDir = Position - CameraPosition;
     float dist   = length(viewDir);

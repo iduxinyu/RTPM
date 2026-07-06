@@ -61,7 +61,7 @@ float D_GGX(float a2, float NoH)
 // -----------------------------
 float Vis_Implicit()
 {
-    return 0.25; // UE 常见近似（等价于 G/4）
+    return 0.25; 
 }
 
 // -----------------------------
@@ -231,9 +231,5 @@ void main()
 	float photonFootprint = dot(fs_in.texcoord.xy, fs_in.texcoord.xy) * photonScreenArea < screenPhotonRadius * screenPhotonRadius ? 1 : 0;
 
     FragColor = vec4(LightingColor*alpha, photonFootprint);
-    //FragColor = vec4(LightingColor, 1.0);
-
-    //FragColor = vec4(abs(sceneViewDepth), 0.0,0.0,1.0);
-
-    //FragColor = vec4(1.0,0.0,0.0,1.0);
+   
 }

@@ -186,7 +186,7 @@ Plane planes[5];
 
 
 
-// PCG hash（高质量）
+// PCG hash
 uint PCGHash(uint seed)
 {
     uint state = seed * 747796405u + 2891336453u;
@@ -294,13 +294,13 @@ mat3 GetTangentBasis(vec3 TangentZ)
         -TangentZ.y
     );
 
-    // column-major：X,Y,Z 是列
+    // column-major
     return mat3(TangentX, TangentY, TangentZ);
 }
 
 
 
-
+//Spot Lighting  Attenuation
 float SpotAttenuationMask(vec3 L, vec3 SpotDirection, vec2 SpotAngles)
 {
     float mask = (dot(L, -SpotDirection) - SpotAngles.x) * SpotAngles.y;
@@ -323,7 +323,7 @@ float SpotAttenuation(vec3 L, vec3 SpotDirection, vec2 SpotAngles)
 
 uint GetTextureOffset(uvec2 threadIdx, int MipLevel)
 {
-    uint mipW = 1 << MipLevel; //左移  miplevel=0: mipW=1 ;   mipLevel=1: mipW=2;
+    uint mipW = 1 << MipLevel; //  miplevel=0: mipW=1 ;   mipLevel=1: mipW=2;
     //uint mipW= pow(2,MipLevel);
 
     return mipOffset[MipLevel] + threadIdx.y * mipW + threadIdx.x;
@@ -475,7 +475,6 @@ bool GetTask(
 
     pixelCoord = uvec2(screenCoord); // [0,width]
 
-    //lightUV = (screenCoord + RandomOffset * pixelSize - vec2(lightInfo.zw)) / float(lightInfo.y);
 
     //the photons start uv for specific light
     uint seed = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 4096u;
@@ -485,9 +484,7 @@ bool GetTask(
 
     lightUV =(screenCoord +  RandomOffset* pixelSize) / float(LightMapSize.y);  //[0,width] -> [0,1]
 
-    
 
-    //deltaUV = pixelSize / float(lightInfo.y);
     deltaUV = pixelSize / float(LightMapSize.y); //now 1 light 1 tile
 
     // -----------------------------
@@ -527,6 +524,8 @@ vec3 SampleSpotLight(float cosLength, float sinLength, vec2 lightUV)
     return vec3(lightOffset, cosLength);
 }
 
+
+//init photon pos and angle for diferent light source
 void InitFromLight(
 uint lightID,
 vec2 lightUV,
@@ -859,7 +858,7 @@ float saturate(float x)
 
 float luminance(vec3 c)
 {
-    // 标准 Rec.709
+    // Rec.709
     return dot(c, vec3(0.2126, 0.7152, 0.0722));
 }
 
@@ -872,7 +871,7 @@ vec3 FresnelSchlick(vec3 F0, float cosTheta)
 }
 
 // -----------------------------
-// 从 IOR 计算 F0（可选）
+// Compute F0 by IOR
 // -----------------------------
 float IorToF0(float ior)
 {
@@ -881,7 +880,7 @@ float IorToF0(float ior)
 }
 
 // -----------------------------
-// 主函数：计算 fresnel 概率
+// Compute Fresnel Prob
 // -----------------------------
 float ComputeFresnelProbability(vec3 specularColor, float cosTheta)
 {
@@ -889,7 +888,6 @@ float ComputeFresnelProbability(vec3 specularColor, float cosTheta)
 
     vec3 F = FresnelSchlick(specularColor, NoV);
 
-    // 转成标量概率（用于 isReflect）
     return luminance(F);
 }
 
@@ -929,7 +927,7 @@ void CalculateDNdx(
 }
 
 //////////////////////////////////////////////////////////
-/// Trace
+/// Photon Map Ray Trace
 /// /////////////////////////////////////////////////////
 
 
@@ -967,10 +965,9 @@ bool ComputeSurfaceDerivatives(
     // ===== degenerate UV handling =====
     if (abs(det) < 1e-8)
     {
-        // fallback: 构造一个几何正交基（不依赖UV）
+        
         vec3 N = normalize(cross(edge1, edge2));
 
-        // 找一个不平行的向量
         vec3 tangent = normalize(abs(N.x) > 0.5 ? vec3(N.y, -N.x, 0.0) 
                                                 : vec3(0.0, N.z, -N.y));
         vec3 bitangent = normalize(cross(N, tangent));
@@ -978,7 +975,7 @@ bool ComputeSurfaceDerivatives(
         dPdu = tangent;
         dPdv = bitangent;
 
-        return false; // 标记 fallback
+        return false; 
     }
 
     float invDet = 1.0 / det;
@@ -1015,6 +1012,9 @@ void ComputeNormalDerivatives(
     dNdu = ( duv2.y * edgeN1 - duv1.y * edgeN2) * invDet;
     dNdv = (-duv2.x * edgeN1 + duv1.x * edgeN2) * invDet;
 }
+//////////////////////////////////////////////////////////
+/// Basic Ray Tracing
+///////////////////////////////////////////////////////// 
 
 
 Plane planeConstruct(int axis, float dis, vec3 color)
@@ -1204,7 +1204,7 @@ bool hitGlasses(RayDesc r, inout HitRecord rec)
         }
 
         //transform object localMinT into world space minT, and pdate 
-        if(localMinT>0.0f) //该物体存在碰撞才有意义
+        if(localMinT>0.0f) 
         {
             vec3 localP=localR.o+localMinT*localR.d;
             vec4 p=model*vec4(localP,1.0f);
@@ -1592,7 +1592,7 @@ float GetVariance(vec3 screenCoord)
     ivec2 iuv = ivec2(uv * ViewportDim);
     iuv = clamp(iuv, ivec2(0), ivec2(ViewportDim) - 1);
 
-    // 等价 HLSL Texture2DSample + point sampler
+    
     float variance = texelFetch(VarianceTexture, iuv, 0).w;
     return variance;
 }

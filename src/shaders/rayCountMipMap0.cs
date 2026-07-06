@@ -26,7 +26,7 @@ uint GetSampleCount(float v00, float v10, float v01, float v11)
 
 uint GetTextureOffset(ivec2 threadIdx, int MipLevel)
 {
-    int mipW = 1 << MipLevel; //左移  miplevel=0: mipW=1 ;   mipLevel=1: mipW=2;
+    int mipW = 1 << MipLevel; //  miplevel=0: mipW=1 ;   mipLevel=1: mipW=2;
 
     return mipOffset[MipLevel] + threadIdx.y * mipW + threadIdx.x;
 

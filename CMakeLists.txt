@@ -15,16 +15,16 @@ if(WIN32)
 
     include_directories(include/WIN)
 
-    # 本地库目录
+    # 
     link_directories(${PROJECT_SOURCE_DIR}/lib)
 
-    # 查找 glfw
+    # glfw
     find_library(GLFW_LIB
         NAMES glfw3
         PATHS ${PROJECT_SOURCE_DIR}/lib
     )
 
-    # 查找 assimp
+    # assimp
     find_library(ASSIMP_LIB
         NAMES assimp libassimp
         PATHS ${PROJECT_SOURCE_DIR}/lib
